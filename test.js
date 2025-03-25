@@ -23,7 +23,28 @@ const operations = [
         name: "Cắt vải may áo sơ mi",
         quantity: 30000,
         requiredPosition: "Nhân viên cắt vải",
+        taskType: "T001",
         prequisite: "",
+    },
+
+    {
+        id: "OP002",
+        productionOrderId: "LSX0001", // ID của đơn hàng sản xuất
+        name: "May áo sơ mi",
+        quantity: 30000,
+        requiredPosition: "Nhân viên may",
+        taskType: "T002",
+        prequisite: "OP001", // Cắt vải
+    },
+
+    {
+        id: "OP003",
+        productionOrderId: "LSX0001", // ID của đơn hàng sản xuất
+        name: "Đóng gói áo sơ mi",
+        quantity: 30000,
+        requiredPosition: "Nhân viên đóng gói",
+        taskType: "T003",
+        prequisite: "OP002", // May áo
     },
     {
         id: "OP004",
@@ -31,15 +52,8 @@ const operations = [
         name: "Cắt vải may quần tây",
         quantity: 50000,
         requiredPosition: "Nhân viên cắt vải",
+        taskType: "T004",
         prequisite: "",
-    },
-    {
-        id: "OP002",
-        productionOrderId: "LSX0001", // ID của đơn hàng sản xuất
-        name: "May áo sơ mi",
-        quantity: 30000,
-        requiredPosition: "Nhân viên may",
-        prequisite: "OP001", // Cắt vải
     },
     {
         id: "OP005",
@@ -47,23 +61,16 @@ const operations = [
         name: "May áo sơ mi",
         quantity: 50000,
         requiredPosition: "Nhân viên may",
+        taskType: "T005",
         prequisite: "OP004", // Cắt vải
     },
-    {
-        id: "OP003",
-        productionOrderId: "LSX0001", // ID của đơn hàng sản xuất
-        name: "Đóng gói áo sơ mi",
-        quantity: 30000,
-        requiredPosition: "Nhân viên đóng gói",
-        prequisite: "OP002", // May áo
-    },
-
     {
         id: "OP006",
         productionOrderId: "LSX0002", // ID của đơn hàng sản xuất
         name: "Đóng gói áo sơ mi",
         quantity: 50000,
         requiredPosition: "Nhân viên đóng gói",
+        taskType: "T006",
         prequisite: "OP005", // May áo
     },
 ];
@@ -74,11 +81,21 @@ const workers = [
         id: "W001",
         name: "Nguyễn Văn A",
         position: "Nhân viên cắt vải",
-        productivityKPI: 80, // Số lượng hoàn thành / thời gian hoàn thành (chiếc / giờ)
-        qualityKPI: 1, // (Số lượng đạt chuẩn / Số lượng hoàn thành)*100%
-        efficiencyKPI: 0.95, // (Số lượng hoàn thành / Số lượng cần bàn giao)*100%
         salaryPerHour: 5, // Lương theo giờ
-        flag: false, // Cờ để đánh dấu hiện tại công nhân đã được phân bổ hay chưa
+        kpis: [
+            {
+                taskType: "T001",
+                productivityKPI: 80, // Số lượng hoàn thành / thời gian hoàn thành (chiếc / giờ)
+                qualityKPI: 1, // (Số lượng đạt chuẩn / Số lượng hoàn thành)*100%
+                efficiencyKPI: 0.95, // (Số lượng hoàn thành / Số lượng cần bàn giao)*100%
+            },
+            {
+                taskType: "T004",
+                productivityKPI: 73,
+                qualityKPI: 0.98,
+                efficiencyKPI: 0.92,
+            },
+        ],
     },
     {
         id: "W002",
@@ -88,7 +105,6 @@ const workers = [
         qualityKPI: 1,
         efficiencyKPI: 0.92,
         salaryPerHour: 6, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W003",
@@ -98,7 +114,6 @@ const workers = [
         qualityKPI: 1,
         efficiencyKPI: 0.94,
         salaryPerHour: 5, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W004",
@@ -108,7 +123,6 @@ const workers = [
         qualityKPI: 1,
         efficiencyKPI: 0.96,
         salaryPerHour: 7, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W005",
@@ -118,7 +132,6 @@ const workers = [
         qualityKPI: 1,
         efficiencyKPI: 0.93,
         salaryPerHour: 7, // Lương theo giờ
-        flag: false,
     },
 
     // Công nhân may áo
@@ -130,7 +143,6 @@ const workers = [
         qualityKPI: 0.96,
         efficiencyKPI: 0.91,
         salaryPerHour: 8, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W007",
@@ -140,7 +152,6 @@ const workers = [
         qualityKPI: 0.95,
         efficiencyKPI: 0.92,
         salaryPerHour: 9, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W008",
@@ -150,7 +161,6 @@ const workers = [
         qualityKPI: 0.97,
         efficiencyKPI: 0.93,
         salaryPerHour: 10, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W009",
@@ -160,7 +170,6 @@ const workers = [
         qualityKPI: 0.95,
         efficiencyKPI: 0.9,
         salaryPerHour: 9, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W010",
@@ -170,7 +179,6 @@ const workers = [
         qualityKPI: 0.94,
         efficiencyKPI: 0.89,
         salaryPerHour: 11, // Lương theo giờ
-        flag: false,
     },
 
     // Công nhân đóng gói
@@ -182,7 +190,6 @@ const workers = [
         qualityKPI: 0.96,
         efficiencyKPI: 0.94,
         salaryPerHour: 5, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W012",
@@ -192,7 +199,6 @@ const workers = [
         qualityKPI: 0.95,
         efficiencyKPI: 0.92,
         salaryPerHour: 6, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W013",
@@ -202,7 +208,6 @@ const workers = [
         qualityKPI: 0.97,
         efficiencyKPI: 0.91,
         salaryPerHour: 5, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W014",
@@ -212,7 +217,6 @@ const workers = [
         qualityKPI: 0.96,
         efficiencyKPI: 0.92,
         salaryPerHour: 6, // Lương theo giờ
-        flag: false,
     },
     {
         id: "W015",
@@ -222,7 +226,6 @@ const workers = [
         qualityKPI: 0.95,
         efficiencyKPI: 0.98,
         salaryPerHour: 8, // Lương theo giờ
-        flag: false,
     },
 ];
 
