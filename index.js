@@ -439,12 +439,11 @@ function harmonySearch(
       totalCost += cost;
       totalTime += time;
     }
-    // console.log(solutions, totalCost, totalTime);
 
     // // Chỉ thêm giải pháp nếu thỏa mãn giới hạn thời gian
-    // if (totalTime <= limitTime) {
-    harmonyMemory.push({ solutions, totalCost, totalTime });
-    // }
+    if (totalTime <= limitTime) {
+      harmonyMemory.push({ solutions, totalCost, totalTime });
+    }
   }
 
   // Sắp xếp Harmony Memory theo chi phí tăng dần
@@ -453,34 +452,50 @@ function harmonySearch(
   // Lặp qua các thế hệ
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     const newSolutions = [];
-    let newTotalCost = 0;
-    let newTotalTime = 0;
+    let totalCost = 0;
+    let totalTime = 0;
 
     for (const operation of operations) {
-      const solution = generateRandomSolution(operation, workers, assets);
-      if (solution.length === 0) {
-        continue;
+      if (Math.random() < 0.8) {
+        // Chọn ngẫu nhiên từ Harmony Memory
+        const randomSolution =
+          harmonyMemory[Math.floor(Math.random() * harmonyMemory.length)];
+        const selectedSolution =
+          randomSolution.solutions[operations.indexOf(operation)];
+        newSolutions.push(selectedSolution);
+
+        // Tính toán chi phí và thời gian cho giải pháp đã chọn
+        const { totalCost: cost, totalTime: time } = calculateCostAndTime(
+          selectedSolution,
+          operation
+        );
+        totalCost += cost;
+        totalTime += time;
+      } else {
+        // Tạo ngẫu nhiên
+        const solution = generateRandomSolution(operation, workers, assets);
+        const { totalCost: cost, totalTime: time } = calculateCostAndTime(
+          solution,
+          operation
+        );
+
+        newSolutions.push(solution);
+        totalCost += cost;
+        totalTime += time;
       }
-
-      const { totalCost: cost, totalTime: time } = calculateCostAndTime(
-        solution,
-        operation
-      );
-
-      newSolutions.push(solution);
-      newTotalCost += cost;
-      newTotalTime += time;
     }
 
-    // Sắp xếp Harmony Memory theo chi phí tăng dần
-    harmonyMemory.sort((a, b) => a.totalCost - b.totalCost);
+    // Đánh giá giải pháp mới
+    if (totalTime <= limitTime) {
+      harmonyMemory.push({ solutions: newSolutions, totalCost, totalTime });
 
-    // Giữ lại các giải pháp tốt nhất trong Harmony Memory
-    if (harmonyMemory.length > harmonyMemorySize) {
-      harmonyMemory = harmonyMemory.slice(0, harmonyMemorySize);
+      // Sắp xếp lại Harmony Memory và giữ kích thước cố định
+      harmonyMemory.sort((a, b) => a.totalCost - b.totalCost);
+      if (harmonyMemory.length > harmonyMemorySize) {
+        harmonyMemory.pop();
+      }
     }
   }
-
   return harmonyMemory[0];
 }
 
