@@ -448,7 +448,8 @@ function harmonySearch(
 
   // Sắp xếp Harmony Memory theo chi phí tăng dần
   harmonyMemory.sort((a, b) => a.totalCost - b.totalCost);
-
+  const HMCR = 0.8;
+  const PAR = 0.3;
   // Lặp qua các thế hệ
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     const newSolutions = [];
@@ -456,12 +457,23 @@ function harmonySearch(
     let totalTime = 0;
 
     for (const operation of operations) {
-      if (Math.random() < 0.8) {
+      if (Math.random() < HMCR) {
         // Chọn ngẫu nhiên từ Harmony Memory
         const randomSolution =
           harmonyMemory[Math.floor(Math.random() * harmonyMemory.length)];
-        const selectedSolution =
+        let selectedSolution =
           randomSolution.solutions[operations.indexOf(operation)];
+
+        // Áp dụng Pitch Adjustment với xác suất PAR
+        if (Math.random() < PAR) {
+          selectedSolution = adjustSolution(
+            selectedSolution,
+            workers,
+            assets,
+            operation
+          );
+        }
+
         newSolutions.push(selectedSolution);
 
         // Tính toán chi phí và thời gian cho giải pháp đã chọn
@@ -498,7 +510,31 @@ function harmonySearch(
   }
   return harmonyMemory[0];
 }
+function adjustSolution(solution, workers, assets, operation) {
+  // Tạo bản sao của solution để điều chỉnh
+  const adjustedSolution = [...solution];
+  const randomIndex = Math.floor(Math.random() * adjustedSolution.length);
 
+  // Lấy danh sách các ID máy móc đã được sử dụng trong solution
+  const usedAssets = new Set(adjustedSolution.map((pair) => pair.asset.id));
+
+  // Tìm máy móc mới chưa được sử dụng
+  let newAsset;
+  do {
+    newAsset = assets[Math.floor(Math.random() * assets.length)];
+  } while (
+    usedAssets.has(newAsset.id) ||
+    newAsset.taskType !== operation.taskType
+  );
+
+  // Thay thế máy móc mới vào cặp tại vị trí randomIndex
+  adjustedSolution[randomIndex] = {
+    worker: adjustedSolution[randomIndex].worker, // Giữ nguyên nhân viên
+    asset: newAsset, // Gán máy móc mới
+  };
+
+  return adjustedSolution;
+}
 // Tham số đầu vào
 const maxIterations = 1000;
 const harmonyMemorySize = 10;
