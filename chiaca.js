@@ -496,26 +496,53 @@ function transformSolutionOutput(bestSolution, operations) {
       const daysRequired = Math.ceil(
         operation.quantity / totalProductivityPerHour / 24
       );
-
-      // Tạo mảng schedule ngẫu nhiên cho nhân viên
+      // Tạo mảng schedule ngẫu nhiên cho nhân viên với điều kiện không làm 2 ca liên tiếp
       const usedShiftsPerDay = Array.from(
         { length: daysRequired },
         () => new Set()
       ); // Tập hợp các ca đã được sử dụng cho từng ngày
-      workers.forEach((worker) => {
-        worker.schedule = Array.from(
-          { length: daysRequired },
-          (_, dayIndex) => {
-            let shift;
-            do {
-              shift = Math.floor(Math.random() * 3) + 1; // Ngẫu nhiên từ 1 đến 3
-            } while (usedShiftsPerDay[dayIndex].has(shift)); // Đảm bảo không trùng ca trong cùng ngày
 
-            usedShiftsPerDay[dayIndex].add(shift); // Đánh dấu ca đã được sử dụng trong ngày
-            return shift;
+      for (let dayIndex = 0; dayIndex < daysRequired; dayIndex++) {
+        // Tách nhân viên có prevShift là 3
+        const workersWithPrevShift3 = [];
+        const otherWorkers = [];
+
+        workers.forEach((worker) => {
+          if (dayIndex > 0 && worker.schedule[dayIndex - 1] === 3) {
+            workersWithPrevShift3.push(worker);
+          } else {
+            otherWorkers.push(worker);
           }
-        );
-      });
+        });
+
+        // Gán ca cho nhân viên có prevShift là 3 trước
+        workersWithPrevShift3.forEach((worker) => {
+          let shift;
+          do {
+            shift = Math.floor(Math.random() * 2) + 2; // Ngẫu nhiên giữa 2 và 3
+          } while (usedShiftsPerDay[dayIndex].has(shift)); // Đảm bảo không trùng ca trong cùng ngày
+
+          usedShiftsPerDay[dayIndex].add(shift); // Đánh dấu ca đã được sử dụng trong ngày
+          if (!worker.schedule) {
+            worker.schedule = [];
+          }
+          worker.schedule[dayIndex] = shift;
+        });
+
+        // Gán ca cho các nhân viên còn lại
+        otherWorkers.forEach((worker) => {
+          let shift;
+          do {
+            shift = Math.floor(Math.random() * 3) + 1; // Ngẫu nhiên từ 1 đến 3
+          } while (usedShiftsPerDay[dayIndex].has(shift)); // Đảm bảo không trùng ca trong cùng ngày
+
+          usedShiftsPerDay[dayIndex].add(shift); // Đánh dấu ca đã được sử dụng trong ngày
+          if (!worker.schedule) {
+            worker.schedule = [];
+          }
+          worker.schedule[dayIndex] = shift;
+        });
+      }
 
       // Thêm số ngày làm việc vào máy
       machine.workedDays = daysRequired;
