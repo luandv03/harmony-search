@@ -459,18 +459,92 @@ const bestSolution = harmonySearch(
 
 // Kết quả
 
-const fs = require("fs"); // Import module fs
+function transformSolutionOutput(bestSolution, operations) {
+  const transformedOutput = [];
+
+  bestSolution.solutions.forEach((operationSolution, operationIndex) => {
+    const operation = operations[operationIndex];
+    const machines = {};
+
+    // Gom nhóm nhân viên theo máy
+    operationSolution.forEach(({ worker, asset }) => {
+      if (!machines[asset.id]) {
+        machines[asset.id] = {
+          machine: asset,
+          workers: [],
+        };
+      }
+
+      machines[asset.id].workers.push(worker);
+    });
+
+    // Xử lý từng máy sau khi đã gom nhóm
+    Object.values(machines).forEach((machineGroup) => {
+      const { machine, workers } = machineGroup;
+
+      // Tính tổng năng suất của các nhân viên làm việc trên máy
+      const totalWorkerProductivity = workers.reduce(
+        (sum, w) => sum + w.productivityKPI * w.qualityKPI,
+        0
+      );
+
+      // Tính năng suất tổng cộng mỗi giờ của máy
+      const totalProductivityPerHour =
+        totalWorkerProductivity * machine.productivity;
+
+      // Tính số ngày cần thiết để hoàn thành công đoạn
+      const daysRequired = Math.ceil(
+        operation.quantity / totalProductivityPerHour / 24
+      );
+
+      // Tạo mảng schedule ngẫu nhiên cho nhân viên
+      const usedShiftsPerDay = Array.from(
+        { length: daysRequired },
+        () => new Set()
+      ); // Tập hợp các ca đã được sử dụng cho từng ngày
+      workers.forEach((worker) => {
+        worker.schedule = Array.from(
+          { length: daysRequired },
+          (_, dayIndex) => {
+            let shift;
+            do {
+              shift = Math.floor(Math.random() * 3) + 1; // Ngẫu nhiên từ 1 đến 3
+            } while (usedShiftsPerDay[dayIndex].has(shift)); // Đảm bảo không trùng ca trong cùng ngày
+
+            usedShiftsPerDay[dayIndex].add(shift); // Đánh dấu ca đã được sử dụng trong ngày
+            return shift;
+          }
+        );
+      });
+
+      // Thêm số ngày làm việc vào máy
+      machine.workedDays = daysRequired;
+    });
+
+    // Đưa vào cấu trúc kết quả
+    transformedOutput.push({
+      operation: {
+        id: operation.id,
+        name: operation.name,
+        quantity: operation.quantity,
+        requiredPosition: operation.requiredPosition,
+      },
+      machines: Object.values(machines), // Chuyển từ object sang array
+    });
+  });
+
+  return transformedOutput;
+}
+const fs = require("fs");
+
+// Chuyển đổi cấu trúc dữ liệu
+const transformedOutput = transformSolutionOutput(bestSolution, operations);
 
 // Ghi kết quả ra file JSON
-const outputFilePath = "output.json"; // Đường dẫn file JSON
-const outputData = {
-  bestSolution: bestSolution,
-};
+fs.writeFileSync(
+  "output_transformed.json",
+  JSON.stringify(transformedOutput, null, 2),
+  "utf-8"
+);
 
-fs.writeFile(outputFilePath, JSON.stringify(outputData, null, 2), (err) => {
-  if (err) {
-    console.error("Lỗi khi ghi file JSON:", err);
-  } else {
-    console.log(`Kết quả đã được ghi vào file: ${outputFilePath}`);
-  }
-});
+console.log("Kết quả đã được ghi vào file output_transformed.json");
